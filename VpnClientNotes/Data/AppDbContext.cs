@@ -14,6 +14,7 @@ namespace VpnClientNotes.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Note> Notes { get; set; }
         public DbSet<SystemStat> SystemStats { get; set; }
+        public DbSet<WatchDogSetting> WatchDogSettings { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -25,10 +26,22 @@ namespace VpnClientNotes.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Сидирование (начальные данные). Создаем дефолтного админа при создании БД.
+            // Сидирование пользователя
             modelBuilder.Entity<User>().HasData(
                 new User { Id = 1, Login = "admin", PasswordHash = "admin", Role = Role.Admin }
-            // Примечание: тут должен быть хэш, но для начала оставил так
+            );
+
+            // Сидирование настроек WatchDog (по умолчанию включено всё, интервал 10 секунд)
+            modelBuilder.Entity<WatchDogSetting>().HasData(
+                new WatchDogSetting
+                {
+                    Id = 1,
+                    IsActive = true,
+                    TrackCpu = true,
+                    TrackRam = true,
+                    TrackHdd = true,
+                    IntervalSeconds = 10
+                }
             );
         }
     }

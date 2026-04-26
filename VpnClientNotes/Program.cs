@@ -11,6 +11,9 @@ namespace VpnClientNotes
         {
             LoggerService.LogInfo("Запуск приложения...");
 
+            // Запускаем фоновый сервис аналитики
+            WatchDogService.Start();
+
             // Инициализация (регистрация) команд
             CommandProcessor.RegisterCommand(new HelpCommand());
             // Здесь будем добавлять: CommandProcessor.RegisterCommand(new LoginCommand()); и т.д.
@@ -25,6 +28,8 @@ namespace VpnClientNotes
             CommandProcessor.RegisterCommand(new ShowNotesCommand());
             CommandProcessor.RegisterCommand(new UpdateNoteCommand());
             CommandProcessor.RegisterCommand(new DeleteNoteCommand());
+            CommandProcessor.RegisterCommand(new ShowStatsCommand());
+            CommandProcessor.RegisterCommand(new ConfigWatchDogCommand());
 
             // Основной цикл программы
             while (true)
