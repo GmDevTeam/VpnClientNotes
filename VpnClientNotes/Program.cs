@@ -22,6 +22,9 @@ namespace VpnClientNotes
             CommandProcessor.RegisterCommand(new HelpCommand());
             CommandProcessor.RegisterCommand(new LoginCommand());
             CommandProcessor.RegisterCommand(new AddNoteCommand());
+            CommandProcessor.RegisterCommand(new ShowNotesCommand());
+            CommandProcessor.RegisterCommand(new UpdateNoteCommand());
+            CommandProcessor.RegisterCommand(new DeleteNoteCommand());
 
             // Основной цикл программы
             while (true)

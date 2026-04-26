@@ -33,4 +33,12 @@ namespace VpnClientNotes.Exeptions
     {
         public CommandSyntaxException(string message) : base(message) { }
     }
+
+    /// <summary>
+    /// Ошибка: Запрашиваемый объект не найден в базе данных.
+    /// </summary>
+    public class NotFoundException : AppBaseException
+    {
+        public NotFoundException(string message) : base(message) { }
+    }
 }
