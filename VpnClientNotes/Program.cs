@@ -18,6 +18,11 @@ namespace VpnClientNotes
             Console.WriteLine("Добро пожаловать в консольный клиент заметок VPN Сервиса!");
             Console.WriteLine("Введите --help для получения Markdown инструкции.");
 
+            // Инициализация (регистрация) команд
+            CommandProcessor.RegisterCommand(new HelpCommand());
+            CommandProcessor.RegisterCommand(new LoginCommand());
+            CommandProcessor.RegisterCommand(new AddNoteCommand());
+
             // Основной цикл программы
             while (true)
             {
