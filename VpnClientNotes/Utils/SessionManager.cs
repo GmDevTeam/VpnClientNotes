@@ -42,5 +42,16 @@ namespace VpnClientNotes.Utils
                 File.Delete(SessionFile);
             }
         }
+
+        public static Role GetCurrentUserRole()
+        {
+            if (!IsAuthenticated()) return Role.User; // По умолчанию, хотя без авторизации сюда не дойдет
+
+            string json = File.ReadAllText(SessionFile);
+            using JsonDocument doc = JsonDocument.Parse(json);
+            string roleString = doc.RootElement.GetProperty("Role").GetString();
+
+            return Enum.Parse<Role>(roleString);
+        }
     }
 }
