@@ -10,7 +10,7 @@ namespace VpnClientNotes.Commands
     {
         public string Name => "--addtrackobject";
         public string Description => "Добавить процесс для слежения. Формат: --addTrackObject \"ИмяПроцесса\"";
-        public Role[] AllowedRoles => new[] { Role.Admin, Role.Analyst };
+        public Role[] AllowedRoles => new[] { Role.Analyst };
 
         public void Execute(string[] args)
         {

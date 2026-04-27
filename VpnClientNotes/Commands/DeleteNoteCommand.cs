@@ -15,7 +15,7 @@ namespace VpnClientNotes.Commands
         public string Name => "--deletenote";
         public string Description => "Удалить заметку. Формат: --deleteNote \"ID заметки\"";
 
-        public Role[] AllowedRoles => new[] { Role.User, Role.Admin };
+        public Role[] AllowedRoles => new[] { Role.User };
 
         public void Execute(string[] args)
         {

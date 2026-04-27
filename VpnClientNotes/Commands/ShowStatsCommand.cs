@@ -15,7 +15,7 @@ namespace VpnClientNotes.Commands
         public string Description => "Показать последние данные WatchDog. Формат: --showStats";
 
         // Доступно только Админу и Аналитику
-        public Role[] AllowedRoles => new[] { Role.Admin, Role.Analyst };
+        public Role[] AllowedRoles => new[] { Role.Analyst };
 
         public void Execute(string[] args)
         {

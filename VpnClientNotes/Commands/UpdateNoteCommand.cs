@@ -15,7 +15,7 @@ namespace VpnClientNotes.Commands
         public string Name => "--updatenote";
         public string Description => "Обновить текст заметки. Формат: --updateNote \"ID заметки\" \"Новый текст\"";
 
-        public Role[] AllowedRoles => new[] { Role.User, Role.Admin };
+        public Role[] AllowedRoles => new[] { Role.User };
 
         public void Execute(string[] args)
         {

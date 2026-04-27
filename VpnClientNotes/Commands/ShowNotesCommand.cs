@@ -16,7 +16,7 @@ namespace VpnClientNotes.Commands
         public string Description => "Показать все мои заметки. Формат: --showNotes";
 
         // Доступно пользователям и админам
-        public Role[] AllowedRoles => new[] { Role.User, Role.Admin };
+        public Role[] AllowedRoles => new[] { Role.User };
 
         public void Execute(string[] args)
         {

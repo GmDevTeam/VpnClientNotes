@@ -14,7 +14,7 @@ namespace VpnClientNotes.Commands
         public string Name => "--configwatchdog";
         public string Description => "Настройка WatchDog. Формат: --configWatchDog \"Ключ (cpu/ram/hdd/interval/isactive)\" \"Значение (true/false или число)\"";
 
-        public Role[] AllowedRoles => new[] { Role.Admin, Role.Analyst };
+        public Role[] AllowedRoles => new[] { Role.Analyst };
 
         public void Execute(string[] args)
         {

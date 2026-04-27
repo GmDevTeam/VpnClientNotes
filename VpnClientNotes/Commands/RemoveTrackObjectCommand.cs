@@ -10,7 +10,7 @@ namespace VpnClientNotes.Commands
     {
         public string Name => "--removetrackobject";
         public string Description => "Удалить процесс из слежения. Формат: --removeTrackObject \"ИмяПроцесса\"";
-        public Role[] AllowedRoles => new[] { Role.Admin, Role.Analyst };
+        public Role[] AllowedRoles => new[] { Role.Analyst };
 
         public void Execute(string[] args)
         {

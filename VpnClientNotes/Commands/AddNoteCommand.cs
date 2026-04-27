@@ -15,7 +15,7 @@ namespace VpnClientNotes.Commands
         public string Description => "Создать новую заметку. Формат: --addNewNote \"Текст заметки\"";
 
         // Разрешаем только Юзерам и Админам
-        public Role[] AllowedRoles => new[] { Role.User, Role.Admin };
+        public Role[] AllowedRoles => new[] { Role.User };
 
         public void Execute(string[] args)
         {
