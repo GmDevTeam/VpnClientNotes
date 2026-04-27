@@ -13,9 +13,9 @@ namespace VpnClientNotes.Commands
 
         public void Execute(string[] args)
         {
-            Console.WriteLine("\n# 📖 Карта команд VPN Notes Client\n");
+            Console.WriteLine("\n# Карта команд VPN Notes Client\n");
             Console.WriteLine("Формат использования: `[команда] [аргументы в кавычках]`\n");
-            Console.WriteLine("## 🛠 Доступные ВАМ команды:\n");
+            Console.WriteLine("## Доступные ВАМ команды:\n");
 
             // Узнаем, кто сейчас запрашивает help
             bool isAuth = SessionManager.IsAuthenticated();
@@ -47,7 +47,7 @@ namespace VpnClientNotes.Commands
             }
 
             // Блок примеров остается неизменным
-            Console.WriteLine("## 💡 Примеры использования:");
+            Console.WriteLine("## Примеры использования:");
             Console.WriteLine("```bash");
             Console.WriteLine("> --register \"Student\" \"P@ssw0rd123\"");
             Console.WriteLine("> --login \"admin\" \"admin\"");

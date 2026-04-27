@@ -44,6 +44,9 @@ namespace VpnClientNotes
             CommandProcessor.RegisterCommand(new UnfreezeUserCommand());
             CommandProcessor.RegisterCommand(new AddTrackObjectCommand());
             CommandProcessor.RegisterCommand(new RemoveTrackObjectCommand());
+            CommandProcessor.RegisterCommand(new ShowUsersCommand());
+            CommandProcessor.RegisterCommand(new DeleteUserCommand());
+            CommandProcessor.RegisterCommand(new ShowLogsCommand());
 
 
             // Основной цикл программы
