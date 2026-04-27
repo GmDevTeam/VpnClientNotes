@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace VpnClientNotes.Utils
 {
