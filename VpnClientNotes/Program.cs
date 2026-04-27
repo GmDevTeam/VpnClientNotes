@@ -34,6 +34,7 @@ namespace VpnClientNotes
             CommandProcessor.RegisterCommand(new DeleteNoteCommand());
             CommandProcessor.RegisterCommand(new ShowStatsCommand());
             CommandProcessor.RegisterCommand(new ConfigWatchDogCommand());
+            CommandProcessor.RegisterCommand(new RegisterCommand());
 
             // Основной цикл программы
             while (true)

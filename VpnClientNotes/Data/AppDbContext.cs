@@ -28,7 +28,7 @@ namespace VpnClientNotes.Data
         {
             // Сидирование пользователя
             modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, Login = "admin", PasswordHash = "admin", Role = Role.Admin }
+                new User { Id = 1, Login = "admin", PasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918", Role = Role.Admin }
             );
 
             // Сидирование настроек WatchDog (по умолчанию включено всё, интервал 10 секунд)

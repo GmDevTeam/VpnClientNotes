@@ -41,4 +41,20 @@ namespace VpnClientNotes.Exeptions
     {
         public NotFoundException(string message) : base(message) { }
     }
+
+    /// <summary>
+    /// Ошибка: Пользователь с таким логином уже существует.
+    /// </summary>
+    public class UserAlreadyExistsException : AppBaseException
+    {
+        public UserAlreadyExistsException(string message) : base(message) { }
+    }
+
+    /// <summary>
+    /// Ошибка: Пароль не соответствует требованиям безопасности.
+    /// </summary>
+    public class PasswordComplexityException : AppBaseException
+    {
+        public PasswordComplexityException(string message) : base(message) { }
+    }
 }

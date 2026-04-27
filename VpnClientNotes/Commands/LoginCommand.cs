@@ -33,7 +33,9 @@ namespace VpnClientNotes.Commands
             using (var db = new AppDbContext())
             {
                 // Ищем пользователя в базе
-                var user = db.Users.FirstOrDefault(u => u.Login == login && u.PasswordHash == password);
+                // Хэшируем введенный пользователем пароль и сравниваем с хэшем в базе
+                string hashedInputPassword = HashHelper.ComputeSha256Hash(password);
+                var user = db.Users.FirstOrDefault(u => u.Login == login && u.PasswordHash == hashedInputPassword);
 
                 if (user == null)
                 {

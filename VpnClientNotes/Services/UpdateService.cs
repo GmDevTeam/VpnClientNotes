@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -10,16 +11,20 @@ namespace VpnClientNotes.Services
 {
     public static class UpdateService
     {
-        // Наша текущая версия
-        public const string CurrentVersion = "v1.0.0";
+        // Указание репозитория!
+        private const string GitHubRepo = "GmDevTeam/VpnClientNotes";
 
-        // ВАЖНО: Замени "ТвойЛогин" и "ИмяРепозитория" на свои из GitHub!
-        // Например: "Oldman/VpnClientNotes"
-        private const string GitHubRepo = "ТвойЛогин/ИмяРепозитория";
+        // ДИНАМИЧЕСКОЕ ЧТЕНИЕ ВЕРСИИ: программа берет версию прямо из свойств своего .exe файла
+        public static string CurrentVersion
+        {
+            get
+            {
+                // Получаем версию сборки (например, 1.1.0) и добавляем букву "v" спереди для GitHub
+                var version = Assembly.GetExecutingAssembly().GetName().Version;
+                return $"v{version.Major}.{version.Minor}.{version.Build}";
+            }
+        }
 
-        /// <summary>
-        /// Асинхронная проверка обновлений через GitHub API.
-        /// </summary>
         public static async Task CheckForUpdatesAsync()
         {
             Console.WriteLine($"[Система] Текущая версия: {CurrentVersion}");
@@ -28,7 +33,6 @@ namespace VpnClientNotes.Services
             try
             {
                 using HttpClient client = new HttpClient();
-                // GitHub API требует обязательный заголовок User-Agent
                 client.DefaultRequestHeaders.Add("User-Agent", "VpnNotesClient-Updater");
 
                 string apiUrl = $"https://api.github.com/repos/{GitHubRepo}/releases/latest";
@@ -36,17 +40,16 @@ namespace VpnClientNotes.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine("[Система] Нет доступа к репозиторию или релизы еще не созданы.\n");
+                    Console.WriteLine("[Система] Нет доступа к репозиторию (или релизы не найдены).\n");
                     return;
                 }
 
                 string jsonResponse = await response.Content.ReadAsStringAsync();
                 using JsonDocument doc = JsonDocument.Parse(jsonResponse);
 
-                // Получаем версию последнего релиза (tag_name)
                 string latestVersion = doc.RootElement.GetProperty("tag_name").GetString();
 
-                // Сравниваем версии (например, v1.0.0 и v1.1.0)
+                // Сравниваем версии
                 if (latestVersion != CurrentVersion)
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -57,28 +60,22 @@ namespace VpnClientNotes.Services
                     string answer = Console.ReadLine()?.ToLower();
                     if (answer == "да" || answer == "yes" || answer == "y")
                     {
-                        // Ищем ссылку на скачивание файла в массиве assets
                         var assets = doc.RootElement.GetProperty("assets");
                         if (assets.GetArrayLength() > 0)
                         {
                             string downloadUrl = assets[0].GetProperty("browser_download_url").GetString();
                             await PerformUpdateAsync(downloadUrl);
                         }
-                        else
-                        {
-                            Console.WriteLine("[Ошибка] В релизе на GitHub нет прикрепленного .exe файла.");
-                        }
                     }
                 }
                 else
                 {
-                    Console.WriteLine("[Система] У вас установлена самая актуальная версия.\n");
+                    Console.WriteLine("[Система] У вас установлена самая последняя версия.\n");
                 }
             }
             catch (Exception ex)
             {
-                LoggerService.LogError($"Ошибка при проверке обновлений GitHub: {ex.Message}");
-                Console.WriteLine("[Система] Ошибка сети при проверке обновлений.\n");
+                LoggerService.LogError($"Ошибка обновления: {ex.Message}");
             }
         }
 
@@ -88,7 +85,6 @@ namespace VpnClientNotes.Services
 
             string tempFilePath = Path.Combine(Path.GetTempPath(), "VpnClientNotes_new.exe");
 
-            // Скачиваем новый .exe файл во временную папку Windows
             using (HttpClient client = new HttpClient())
             {
                 byte[] fileBytes = await client.GetByteArrayAsync(downloadUrl);
@@ -97,21 +93,23 @@ namespace VpnClientNotes.Services
 
             Console.WriteLine("Скачивание завершено. Перезапуск системы...");
 
-            string currentExePath = Assembly.GetExecutingAssembly().Location;
-            currentExePath = Path.ChangeExtension(currentExePath, ".exe");
+            string currentExePath = Environment.ProcessPath;
             string currentDirectory = Path.GetDirectoryName(currentExePath);
             string batFilePath = Path.Combine(currentDirectory, "updater.bat");
 
-            // Скрипт копирует скачанный файл из Temp поверх нашего и запускает
+            // 1. Команда chcp 65001 заставляет CMD работать в кодировке UTF-8.
+            // 2. Использование timeout вместо ping (более стабильно).
             string batContent = $@"
                                 @echo off
-                                ping 127.0.0.1 -n 3 > nul
+                                chcp 65001 > nul
+                                timeout /t 2 /nobreak > nul
                                 copy /Y ""{tempFilePath}"" ""{currentExePath}""
                                 start """" ""{currentExePath}""
                                 del ""{tempFilePath}""
                                 del ""%~f0""
                                 ";
-            File.WriteAllText(batFilePath, batContent);
+            // Явно сохраняем .bat файл в UTF-8
+            File.WriteAllText(batFilePath, batContent, Encoding.UTF8);
 
             var processInfo = new ProcessStartInfo("cmd.exe", $"/c \"{batFilePath}\"")
             {
@@ -123,5 +121,4 @@ namespace VpnClientNotes.Services
             Environment.Exit(0);
         }
     }
-
 }
