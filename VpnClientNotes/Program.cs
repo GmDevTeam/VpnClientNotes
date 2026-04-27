@@ -2,14 +2,18 @@
 using VpnClientNotes.Utils;
 using System;
 using VpnClientNotes.Commands;
+using System.Threading.Tasks;
 
 namespace VpnClientNotes
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             LoggerService.LogInfo("Запуск приложения...");
+
+            // Запускаем проверку обновлений с GitHub
+            await UpdateService.CheckForUpdatesAsync();
 
             // Запускаем фоновый сервис аналитики
             WatchDogService.Start();

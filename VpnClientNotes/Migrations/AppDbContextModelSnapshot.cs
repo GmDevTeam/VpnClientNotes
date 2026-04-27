@@ -44,7 +44,7 @@ namespace VpnClientNotes.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notes");
+                    b.ToTable("Notes", (string)null);
                 });
 
             modelBuilder.Entity("VpnClientNotes.Models.SystemStat", b =>
@@ -69,7 +69,7 @@ namespace VpnClientNotes.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SystemStats");
+                    b.ToTable("SystemStats", (string)null);
                 });
 
             modelBuilder.Entity("VpnClientNotes.Models.User", b =>
@@ -93,7 +93,7 @@ namespace VpnClientNotes.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
 
                     b.HasData(
                         new
@@ -130,7 +130,7 @@ namespace VpnClientNotes.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("WatchDogSettings");
+                    b.ToTable("WatchDogSettings", (string)null);
 
                     b.HasData(
                         new
