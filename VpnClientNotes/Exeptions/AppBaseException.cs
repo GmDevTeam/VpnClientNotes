@@ -65,4 +65,12 @@ namespace VpnClientNotes.Exeptions
     {
         public UserBannedException(string message) : base(message) { }
     }
+
+    /// <summary>
+    /// Ошибка: Объект уже существует в системе (для WatchDog).
+    /// </summary>
+    public class ObjectAlreadyExistsException : AppBaseException
+    {
+        public ObjectAlreadyExistsException(string message) : base(message) { }
+    }
 }

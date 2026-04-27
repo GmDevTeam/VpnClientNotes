@@ -15,6 +15,8 @@ namespace VpnClientNotes.Data
         public DbSet<Note> Notes { get; set; }
         public DbSet<SystemStat> SystemStats { get; set; }
         public DbSet<WatchDogSetting> WatchDogSettings { get; set; }
+        public DbSet<TrackedObject> TrackedObjects { get; set; }
+        public DbSet<ProcessStat> ProcessStats { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

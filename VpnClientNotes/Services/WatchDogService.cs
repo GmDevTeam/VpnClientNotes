@@ -91,6 +91,26 @@ namespace VpnClientNotes.Services
                         }
                     }
 
+                    // === СБОР ДАННЫХ ДИНАМИЧЕСКИХ ОБЪЕКТОВ ===
+                    var trackedObjects = db.TrackedObjects.ToList();
+                    foreach (var trackedObj in trackedObjects)
+                    {
+                        // Ищем все запущенные процессы с таким именем в Windows
+                        var processes = Process.GetProcessesByName(trackedObj.ProcessName);
+                        if (processes.Length > 0)
+                        {
+                            // Считаем общую память всех таких процессов (в Мегабайтах)
+                            double totalRam = processes.Sum(p => p.WorkingSet64) / (1024.0 * 1024.0);
+
+                            db.ProcessStats.Add(new ProcessStat
+                            {
+                                ProcessName = trackedObj.ProcessName,
+                                RamUsageMB = Math.Round(totalRam, 2),
+                                RecordedAt = DateTime.Now
+                            });
+                        }
+                    }
+
                     // Сохраняем собранные данные в БД
                     db.SystemStats.Add(stat);
                     db.SaveChanges();
