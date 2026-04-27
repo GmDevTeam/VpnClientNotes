@@ -39,11 +39,20 @@ namespace VpnClientNotes.Commands
 
                 if (user == null)
                 {
-                    // Бросаем нашу кастомную ошибку (она автоматически запишется в лог)
+                    // Бросаем кастомную ошибку (она автоматически запишется в лог)
                     throw new UnauthorizedException($"Неверный логин или пароль для пользователя '{login}'.");
                 }
 
-                // Если нашли - сохраняем сессию локально
+                // ПРОВЕРКА: ЗАМОРОЖЕН ЛИ ПОЛЬЗОВАТЕЛЬ?
+                if (user.BannedUntil.HasValue && user.BannedUntil.Value > DateTime.Now)
+                {
+                    // Считаем, сколько времени осталось
+                    TimeSpan timeLeft = user.BannedUntil.Value - DateTime.Now;
+                    throw new UserBannedException($"Ваш профиль заморожен! Оставшееся время блокировки: {timeLeft.Days} дней, {timeLeft.Hours} часов, {timeLeft.Minutes} минут.");
+                }
+                // Если время блокировки вышло, мы пускаем его
+
+                // Если нашли пользователя - сохраняем сессию локально
                 SessionManager.SaveSession(user);
 
                 Console.ForegroundColor = ConsoleColor.Green;

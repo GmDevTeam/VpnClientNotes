@@ -12,6 +12,9 @@ namespace VpnClientNotes
         {
             LoggerService.LogInfo("Запуск приложения...");
 
+            // Проверяем актуальность сессии (правило 30 минут)
+            SessionManager.ValidateSessionOnStartup();
+
             // Запускаем проверку обновлений с GitHub
             await UpdateService.CheckForUpdatesAsync();
 
@@ -35,6 +38,10 @@ namespace VpnClientNotes
             CommandProcessor.RegisterCommand(new ShowStatsCommand());
             CommandProcessor.RegisterCommand(new ConfigWatchDogCommand());
             CommandProcessor.RegisterCommand(new RegisterCommand());
+            CommandProcessor.RegisterCommand(new LogoutCommand());
+            CommandProcessor.RegisterCommand(new FreezeUserCommand());
+            CommandProcessor.RegisterCommand(new ChangeRoleCommand());
+
 
             // Основной цикл программы
             while (true)

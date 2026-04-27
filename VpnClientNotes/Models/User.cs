@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace VpnClientNotes.Models
 {
@@ -11,10 +10,13 @@ namespace VpnClientNotes.Models
     {
         public int Id { get; set; }
         public string Login { get; set; }
-        public string PasswordHash { get; set; } // Храним хэш, а не голый пароль
+        public string PasswordHash { get; set; }
         public Role Role { get; set; }
 
-        // Навигационное свойство для Entity Framework
+        // Время, до которого профиль заморожен. 
+        // Знак вопроса означает, что оно может быть null (профиль не заморожен)
+        public DateTime? BannedUntil { get; set; }
+
         public List<Note> Notes { get; set; } = new List<Note>();
     }
 }

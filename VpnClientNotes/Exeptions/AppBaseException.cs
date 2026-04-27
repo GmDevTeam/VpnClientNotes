@@ -57,4 +57,12 @@ namespace VpnClientNotes.Exeptions
     {
         public PasswordComplexityException(string message) : base(message) { }
     }
+
+    /// <summary>
+    /// Ошибка: Профиль пользователя заморожен администратором.
+    /// </summary>
+    public class UserBannedException : AppBaseException
+    {
+        public UserBannedException(string message) : base(message) { }
+    }
 }
