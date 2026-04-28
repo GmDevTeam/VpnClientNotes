@@ -47,30 +47,57 @@ namespace VpnClientNotes.Services
                 string jsonResponse = await response.Content.ReadAsStringAsync();
                 using JsonDocument doc = JsonDocument.Parse(jsonResponse);
 
-                string latestVersion = doc.RootElement.GetProperty("tag_name").GetString();
+                string latestVersionStr = doc.RootElement.GetProperty("tag_name").GetString();
 
-                // Сравниваем версии
-                if (latestVersion != CurrentVersion)
+                // СРАВНЕНИЕ ВЕРСИЙ 
+                // Очищаем обе строки от букв 'v', 'V' и лишних точек
+                string cleanLatest = latestVersionStr.ToLower().Replace("v", "").Trim(' ', '.');
+                string cleanCurrent = CurrentVersion.ToLower().Replace("v", "").Trim(' ', '.');
+
+                // Пытаемся превратить очищенные строки в математические объекты Version
+                if (Version.TryParse(cleanLatest, out Version vLatest) && Version.TryParse(cleanCurrent, out Version vCurrent))
                 {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"\n*** ДОСТУПНО НОВОЕ ОБНОВЛЕНИЕ: {latestVersion} ***");
-                    Console.Write("Хотите скачать и установить обновление? (Да/Нет): ");
-                    Console.ResetColor();
-
-                    string answer = Console.ReadLine()?.ToLower();
-                    if (answer == "да" || answer == "yes" || answer == "y")
+                    // Сравниваем математически: если версия на сервере БОЛЬШЕ текущей
+                    if (vLatest > vCurrent)
                     {
-                        var assets = doc.RootElement.GetProperty("assets");
-                        if (assets.GetArrayLength() > 0)
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"\n*** ДОСТУПНО НОВОЕ ОБНОВЛЕНИЕ: {latestVersionStr} ***");
+                        Console.Write("Хотите скачать и установить обновление? (Да/Нет): ");
+                        Console.ResetColor();
+
+                        string answer = Console.ReadLine()?.ToLower();
+                        if (answer == "да" || answer == "yes" || answer == "y")
                         {
-                            string downloadUrl = assets[0].GetProperty("browser_download_url").GetString();
-                            await PerformUpdateAsync(downloadUrl);
+                            var assets = doc.RootElement.GetProperty("assets");
+                            if (assets.GetArrayLength() > 0)
+                            {
+                                string downloadUrl = assets[0].GetProperty("browser_download_url").GetString();
+                                await PerformUpdateAsync(downloadUrl);
+                            }
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine("[Система] У вас установлена самая актуальная версия.\n");
                     }
                 }
                 else
                 {
-                    Console.WriteLine("[Система] У вас установлена самая последняя версия.\n");
+                    // Запасной вариант, если парсинг провалился (вдруг версия названа "alpha")
+                    if (latestVersionStr != CurrentVersion)
+                    {
+                        Console.WriteLine($"\n*** НАЙДЕНА НЕСТАНДАРТНАЯ ВЕРСИЯ: {latestVersionStr} ***");
+                        Console.Write("Попробовать обновить? (Да/Нет): ");
+                        if (Console.ReadLine()?.ToLower() == "да")
+                        {
+                            var assets = doc.RootElement.GetProperty("assets");
+                            if (assets.GetArrayLength() > 0)
+                            {
+                                string downloadUrl = assets[0].GetProperty("browser_download_url").GetString();
+                                await PerformUpdateAsync(downloadUrl);
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)

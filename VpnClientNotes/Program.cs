@@ -12,11 +12,11 @@ namespace VpnClientNotes
         {
             LoggerService.LogInfo("Запуск приложения...");
 
-            // Проверяем актуальность сессии (правило 30 минут)
-            SessionManager.ValidateSessionOnStartup();
-
             // Запускаем проверку обновлений с GitHub
             await UpdateService.CheckForUpdatesAsync();
+
+            // Проверяем актуальность сессии (правило 30 минут)
+            SessionManager.ValidateSessionOnStartup();
 
             // Запускаем фоновый сервис аналитики
             WatchDogService.Start();
@@ -25,8 +25,8 @@ namespace VpnClientNotes
             CommandProcessor.RegisterCommand(new HelpCommand());
             // Здесь будем добавлять: CommandProcessor.RegisterCommand(new LoginCommand()); и т.д.
 
-            Console.WriteLine("Добро пожаловать в консольный клиент заметок VPN Сервиса!");
-            Console.WriteLine("Введите --help для получения Markdown инструкции.");
+            Console.WriteLine("\n**Добро пожаловать в консольный клиент заметок VPN Сервиса!**");
+            Console.WriteLine("Введите --help для получения инструкций.");
 
             // Инициализация (регистрация) команд
             CommandProcessor.RegisterCommand(new HelpCommand());

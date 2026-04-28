@@ -8,7 +8,7 @@ namespace VpnClientNotes.Commands
     public class HelpCommand : ICommand
     {
         public string Name => "--help";
-        public string Description => "Вывод карты команд и инструкций (Markdown формат).";
+        public string Description => "Вывод карты команд и инструкций.";
         public Role[] AllowedRoles => null;
 
         public void Execute(string[] args)
