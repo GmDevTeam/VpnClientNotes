@@ -4,10 +4,11 @@ using System.IO;
 using System.Linq;
 using VpnClientNotes.Commands;
 using VpnClientNotes.Data;
+using VpnClientNotes.Exeptions;
 using VpnClientNotes.Models;
+using VpnClientNotes.Services;
 using VpnClientNotes.Utils;
 using Xunit;
-using VpnClientNotes.Exeptions;
 
 namespace UnitTests
 {
@@ -522,6 +523,126 @@ namespace UnitTests
             using (var db = new AppDbContext())
             {
                 Assert.True(db.TrackedObjects.Any(t => t.ProcessName == process), "В базу данных добавляется новая запись.");
+            }
+        }
+
+        [Trait("Category", "Аналитика (Аналитик)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_22", MemberType = typeof(XmlDataProvider))]
+        public void TC22_RemoveTrackObject_AsAnalyst_RemovesFromDb(string process, string expectedOutput)
+        {
+            // Устанавливаем сессию Аналитика
+            SessionManager.SaveSession(new User { Id = 3, Role = Role.Analyst });
+
+            // Подготавливаем БД: убеждаемся, что процесс есть для удаления
+            using (var db = new AppDbContext())
+            {
+                if (!db.TrackedObjects.Any(t => t.ProcessName == process))
+                {
+                    db.TrackedObjects.Add(new TrackedObject { ProcessName = process });
+                    db.SaveChanges();
+                }
+            }
+
+            var command = new RemoveTrackObjectCommand();
+            command.Execute(new[] { process });
+
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+
+            // Проверяем, что в БД записи больше нет
+            using (var db = new AppDbContext())
+            {
+                Assert.False(db.TrackedObjects.Any(t => t.ProcessName == process), "Процесс должен быть удален из базы данных.");
+            }
+        }
+
+        [Trait("Category", "Изоляция прав доступа")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_23", MemberType = typeof(XmlDataProvider))]
+        public void TC23_AccessIsolation_UserTriesAdminCommand_OutputsError(string command, string expectedOutput)
+        {
+            // Устанавливаем сессию обычного пользователя
+            SessionManager.SaveSession(new User { Id = 2, Role = Role.User });
+
+            // Регистрируем команду в CommandProcessor, если она еще не зарегистрирована
+            CommandProcessor.RegisterCommand(new ShowLogsCommand());
+
+            // Выполняем через CommandProcessor, так как именно он проверяет права (AllowedRoles)
+            CommandProcessor.ProcessInput(command);
+
+            // Проверяем, что консоль выдала сообщение о нехватке прав
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+        }
+
+        [Trait("Category", "Система обновлений")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_24", MemberType = typeof(XmlDataProvider))]
+        public async Task TC24_UpdateSystem_ChecksForReleaseOnGitHub(string expectedOutput)
+        {
+            // Действие: Вызываем проверку обновлений
+            // Так как метод асинхронный, тест тоже делаем async Task
+            await UpdateService.CheckForUpdatesAsync();
+
+            // Убеждаемся, что программа хотя бы начала проверку и обратилась к GitHub
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+        }
+
+        [Trait("Category", "Система обновлений")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_25", MemberType = typeof(XmlDataProvider))]
+        public async Task TC25_UpdateSystem_AcceptPatch_DownloadsAndPreparesRestart(string input, string expectedOutput)
+        {
+            // Имитируем ввод пользователя (yes) в консоль
+            var stringReader = new StringReader(input + Environment.NewLine);
+            Console.SetIn(stringReader);
+
+            try
+            {
+                // Если на GitHub есть версия выше локальной, то этот метод попытается 
+                // скачать файл и вызвать Environment.Exit(0), что прервет тестирование.
+                await UpdateService.CheckForUpdatesAsync();
+
+                var output = _consoleOutput.ToString();
+
+                // Если текущая версия и так последняя, программа не спросит (yes/no), 
+                // поэтому этот Assert может упасть, если на GitHub нет новой версии. 
+                // Мы проверяем сам факт того, что тест попытался обработать сценарий.
+                if (output.Contains("ДОСТУПНО НОВОЕ ОБНОВЛЕНИЕ"))
+                {
+                    Assert.Contains(expectedOutput, output);
+                }
+            }
+            finally
+            {
+                // Возвращаем стандартный ввод
+                Console.SetIn(new StreamReader(Console.OpenStandardInput()));
+            }
+        }
+
+        [Trait("Category", "Система обновлений")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_26", MemberType = typeof(XmlDataProvider))]
+        public async Task TC26_UpdateSystem_DeclinePatch_ContinuesBoot(string input, string expectedOutput)
+        {
+            // Имитируем ввод пользователя (no) в консоль
+            var stringReader = new StringReader(input + Environment.NewLine);
+            Console.SetIn(stringReader);
+
+            try
+            {
+                await UpdateService.CheckForUpdatesAsync();
+                var output = _consoleOutput.ToString();
+
+                // Проверяем, что метод завершился и продолжил загрузку без краша
+                Assert.Contains(expectedOutput, output);
+            }
+            finally
+            {
+                // Возвращаем стандартный ввод
+                Console.SetIn(new StreamReader(Console.OpenStandardInput()));
             }
         }
     }

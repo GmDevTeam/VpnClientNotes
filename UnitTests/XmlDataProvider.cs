@@ -39,6 +39,18 @@ namespace UnitTests
 
                     if (testCaseId == "TC_18" || testCaseId == "TC_19")
                         yield return new object[] { param.Attribute("key").Value, param.Attribute("val").Value, param.Attribute("expectedOutput").Value };
+
+                    if (testCaseId == "TC_22")
+                        yield return new object[] { param.Attribute("process").Value, param.Attribute("expectedOutput").Value };
+
+                    if (testCaseId == "TC_23")
+                        yield return new object[] { param.Attribute("command").Value, param.Attribute("expectedOutput").Value };
+
+                    if (testCaseId == "TC_24")
+                        yield return new object[] { param.Attribute("expectedOutput").Value };
+
+                    if (testCaseId == "TC_25" || testCaseId == "TC_26")
+                        yield return new object[] { param.Attribute("input").Value, param.Attribute("expectedOutput").Value };
                 }
             }
         }
