@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<TestCases>
+	<!-- Тест 3: Регистрация -->
+	<TestCase id="TC_3">
+		<Param login="Student" password="Student_123" expected="успешно зарегистрирован" />
+	</TestCase>
+
+	<!-- Тест 4: Вход -->
+	<TestCase id="TC_4">
+		<Param login="Student" password="Student_123" expected="Успешная авторизация" />
+	</TestCase>
+
+	<!-- Тест 7: Добавление заметки -->
+	<TestCase id="TC_7">
+		<Param noteText="Подготовка к экзамену" expected="успешно добавлена" />
+	</TestCase>
+
+	<!-- Тест 10: Изменение заметки -->
+	<TestCase id="TC_10">
+		<Param newNoteText="Текст изменен" expected="успешно обновлена" />
+	</TestCase>
+</TestCases>

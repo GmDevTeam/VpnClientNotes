@@ -44,6 +44,8 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
+UnitTests/UnitTest1.cs
+UnitTests/UnitTests.csproj
 VpnClientNotes.slnx
 VpnClientNotes/Commands/AddNoteCommand.cs
 VpnClientNotes/Commands/AddTrackObjectCommand.cs
@@ -77,6 +79,8 @@ VpnClientNotes/Migrations/20260427083401_AddUserBan.cs
 VpnClientNotes/Migrations/20260427083401_AddUserBan.Designer.cs
 VpnClientNotes/Migrations/20260427091149_AddDynamicTracking.cs
 VpnClientNotes/Migrations/20260427091149_AddDynamicTracking.Designer.cs
+VpnClientNotes/Migrations/20260428224100_FinalSync.cs
+VpnClientNotes/Migrations/20260428224100_FinalSync.Designer.cs
 VpnClientNotes/Migrations/AppDbContextModelSnapshot.cs
 VpnClientNotes/Models/Note.cs
 VpnClientNotes/Models/ProcessStat.cs
@@ -97,8 +101,46 @@ VpnClientNotes/VpnClientNotes.csproj
 <files>
 This section contains the contents of the repository's files.
 
+<file path="UnitTests/UnitTest1.cs">
+namespace UnitTests
+{
+    public class UnitTest1
+    {
+        [Fact]
+        public void Test1()
+        {
+        }
+    }
+}
+</file>
+
+<file path="UnitTests/UnitTests.csproj">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>
+</file>
+
 <file path="VpnClientNotes.slnx">
 <Solution>
+  <Project Path="UnitTests/UnitTests.csproj" Id="275dfbba-f9ac-42fc-828a-ca9cc550a619" />
   <Project Path="VpnClientNotes/VpnClientNotes.csproj" />
 </Solution>
 </file>
@@ -1843,6 +1885,213 @@ namespace VpnClientNotes.Migrations
 }
 </file>
 
+<file path="VpnClientNotes/Migrations/20260428224100_FinalSync.cs">
+using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+#nullable disable
+namespace VpnClientNotes.Migrations
+{
+    public partial class FinalSync : Migration
+    {
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "ProcessStats",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProcessName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RamUsageMB = table.Column<double>(type: "float", nullable: false),
+                    RecordedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProcessStats", x => x.Id);
+                });
+            migrationBuilder.CreateTable(
+                name: "TrackedObjects",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProcessName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TrackedObjects", x => x.Id);
+                });
+        }
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "ProcessStats");
+            migrationBuilder.DropTable(
+                name: "TrackedObjects");
+        }
+    }
+}
+</file>
+
+<file path="VpnClientNotes/Migrations/20260428224100_FinalSync.Designer.cs">
+using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using VpnClientNotes.Data;
+#nullable disable
+namespace VpnClientNotes.Migrations
+{
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260428224100_FinalSync")]
+    partial class FinalSync
+    {
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder
+                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            modelBuilder.Entity("VpnClientNotes.Models.Note", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+                    b.HasKey("Id");
+                    b.HasIndex("UserId");
+                    b.ToTable("Notes");
+                });
+            modelBuilder.Entity("VpnClientNotes.Models.ProcessStat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("ProcessName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+                    b.Property<double>("RamUsageMB")
+                        .HasColumnType("float");
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("datetime2");
+                    b.HasKey("Id");
+                    b.ToTable("ProcessStats");
+                });
+            modelBuilder.Entity("VpnClientNotes.Models.SystemStat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<double>("CpuUsagePercent")
+                        .HasColumnType("float");
+                    b.Property<double>("HddAvailableGB")
+                        .HasColumnType("float");
+                    b.Property<double>("RamAvailableMB")
+                        .HasColumnType("float");
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("datetime2");
+                    b.HasKey("Id");
+                    b.ToTable("SystemStats");
+                });
+            modelBuilder.Entity("VpnClientNotes.Models.TrackedObject", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("ProcessName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+                    b.HasKey("Id");
+                    b.ToTable("TrackedObjects");
+                });
+            modelBuilder.Entity("VpnClientNotes.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<DateTime?>("BannedUntil")
+                        .HasColumnType("datetime2");
+                    b.Property<string>("Login")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+                    b.HasKey("Id");
+                    b.ToTable("Users");
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Login = "admin",
+                            PasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+                            Role = 1
+                        });
+                });
+            modelBuilder.Entity("VpnClientNotes.Models.WatchDogSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<int>("IntervalSeconds")
+                        .HasColumnType("int");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+                    b.Property<bool>("TrackCpu")
+                        .HasColumnType("bit");
+                    b.Property<bool>("TrackHdd")
+                        .HasColumnType("bit");
+                    b.Property<bool>("TrackRam")
+                        .HasColumnType("bit");
+                    b.HasKey("Id");
+                    b.ToTable("WatchDogSettings");
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            IntervalSeconds = 10,
+                            IsActive = true,
+                            TrackCpu = true,
+                            TrackHdd = true,
+                            TrackRam = true
+                        });
+                });
+            modelBuilder.Entity("VpnClientNotes.Models.Note", b =>
+                {
+                    b.HasOne("VpnClientNotes.Models.User", "User")
+                        .WithMany("Notes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                    b.Navigation("User");
+                });
+            modelBuilder.Entity("VpnClientNotes.Models.User", b =>
+                {
+                    b.Navigation("Notes");
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+</file>
+
 <file path="VpnClientNotes/Migrations/AppDbContextModelSnapshot.cs">
 using System;
 using Microsoft.EntityFrameworkCore;
@@ -1880,6 +2129,22 @@ namespace VpnClientNotes.Migrations
                     b.HasIndex("UserId");
                     b.ToTable("Notes");
                 });
+            modelBuilder.Entity("VpnClientNotes.Models.ProcessStat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("ProcessName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+                    b.Property<double>("RamUsageMB")
+                        .HasColumnType("float");
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("datetime2");
+                    b.HasKey("Id");
+                    b.ToTable("ProcessStats");
+                });
             modelBuilder.Entity("VpnClientNotes.Models.SystemStat", b =>
                 {
                     b.Property<int>("Id")
@@ -1896,6 +2161,18 @@ namespace VpnClientNotes.Migrations
                         .HasColumnType("datetime2");
                     b.HasKey("Id");
                     b.ToTable("SystemStats");
+                });
+            modelBuilder.Entity("VpnClientNotes.Models.TrackedObject", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("ProcessName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+                    b.HasKey("Id");
+                    b.ToTable("TrackedObjects");
                 });
             modelBuilder.Entity("VpnClientNotes.Models.User", b =>
                 {
