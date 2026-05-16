@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="UnitTests/UnitTests.csproj" Id="275dfbba-f9ac-42fc-828a-ca9cc550a619" />
   <Project Path="VpnClientNotes/VpnClientNotes.csproj" />
 </Solution>
