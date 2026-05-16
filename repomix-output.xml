@@ -151,6 +151,21 @@ This section contains the contents of the repository's files.
 	<TestCase id="TC_21">
 		<Param process="chrome.exe" expectedOutput="добавлен в WatchDog" />
 	</TestCase>
+	<TestCase id="TC_22">
+		<Param process="chrome.exe" expectedOutput="Слежение за 'chrome.exe' прекращено" />
+	</TestCase>
+	<TestCase id="TC_23">
+		<Param command="--showlogs" expectedOutput="нет прав для выполнения команды" />
+	</TestCase>
+	<TestCase id="TC_24">
+		<Param expectedOutput="Проверка обновлений на GitHub" />
+	</TestCase>
+	<TestCase id="TC_25">
+		<Param input="yes" expectedOutput="Скачивание завершено" />
+	</TestCase>
+	<TestCase id="TC_26">
+		<Param input="no" expectedOutput="Проверка обновлений на GitHub" />
+	</TestCase>
 </TestCases>
 </file>
 
@@ -195,10 +210,11 @@ using System.IO;
 using System.Linq;
 using VpnClientNotes.Commands;
 using VpnClientNotes.Data;
+using VpnClientNotes.Exeptions;
 using VpnClientNotes.Models;
+using VpnClientNotes.Services;
 using VpnClientNotes.Utils;
 using Xunit;
-using VpnClientNotes.Exeptions;
 namespace UnitTests
 {
     [Collection("Sequential")]
@@ -582,6 +598,88 @@ namespace UnitTests
                 Assert.True(db.TrackedObjects.Any(t => t.ProcessName == process), "В базу данных добавляется новая запись.");
             }
         }
+        [Trait("Category", "Аналитика (Аналитик)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_22", MemberType = typeof(XmlDataProvider))]
+        public void TC22_RemoveTrackObject_AsAnalyst_RemovesFromDb(string process, string expectedOutput)
+        {
+            SessionManager.SaveSession(new User { Id = 3, Role = Role.Analyst });
+            using (var db = new AppDbContext())
+            {
+                if (!db.TrackedObjects.Any(t => t.ProcessName == process))
+                {
+                    db.TrackedObjects.Add(new TrackedObject { ProcessName = process });
+                    db.SaveChanges();
+                }
+            }
+            var command = new RemoveTrackObjectCommand();
+            command.Execute(new[] { process });
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+            using (var db = new AppDbContext())
+            {
+                Assert.False(db.TrackedObjects.Any(t => t.ProcessName == process), "Процесс должен быть удален из базы данных.");
+            }
+        }
+        [Trait("Category", "Изоляция прав доступа")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_23", MemberType = typeof(XmlDataProvider))]
+        public void TC23_AccessIsolation_UserTriesAdminCommand_OutputsError(string command, string expectedOutput)
+        {
+            SessionManager.SaveSession(new User { Id = 2, Role = Role.User });
+            CommandProcessor.RegisterCommand(new ShowLogsCommand());
+            CommandProcessor.ProcessInput(command);
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+        }
+        [Trait("Category", "Система обновлений")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_24", MemberType = typeof(XmlDataProvider))]
+        public async Task TC24_UpdateSystem_ChecksForReleaseOnGitHub(string expectedOutput)
+        {
+            await UpdateService.CheckForUpdatesAsync();
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+        }
+        [Trait("Category", "Система обновлений")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_25", MemberType = typeof(XmlDataProvider))]
+        public async Task TC25_UpdateSystem_AcceptPatch_DownloadsAndPreparesRestart(string input, string expectedOutput)
+        {
+            var stringReader = new StringReader(input + Environment.NewLine);
+            Console.SetIn(stringReader);
+            try
+            {
+                await UpdateService.CheckForUpdatesAsync();
+                var output = _consoleOutput.ToString();
+                if (output.Contains("ДОСТУПНО НОВОЕ ОБНОВЛЕНИЕ"))
+                {
+                    Assert.Contains(expectedOutput, output);
+                }
+            }
+            finally
+            {
+                Console.SetIn(new StreamReader(Console.OpenStandardInput()));
+            }
+        }
+        [Trait("Category", "Система обновлений")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_26", MemberType = typeof(XmlDataProvider))]
+        public async Task TC26_UpdateSystem_DeclinePatch_ContinuesBoot(string input, string expectedOutput)
+        {
+            var stringReader = new StringReader(input + Environment.NewLine);
+            Console.SetIn(stringReader);
+            try
+            {
+                await UpdateService.CheckForUpdatesAsync();
+                var output = _consoleOutput.ToString();
+                Assert.Contains(expectedOutput, output);
+            }
+            finally
+            {
+                Console.SetIn(new StreamReader(Console.OpenStandardInput()));
+            }
+        }
     }
 }
 </file>
@@ -619,6 +717,14 @@ namespace UnitTests
                         yield return new object[] { param.Attribute("login")?.Value ?? param.Attribute("process").Value, param.Attribute("expectedOutput").Value };
                     if (testCaseId == "TC_18" || testCaseId == "TC_19")
                         yield return new object[] { param.Attribute("key").Value, param.Attribute("val").Value, param.Attribute("expectedOutput").Value };
+                    if (testCaseId == "TC_22")
+                        yield return new object[] { param.Attribute("process").Value, param.Attribute("expectedOutput").Value };
+                    if (testCaseId == "TC_23")
+                        yield return new object[] { param.Attribute("command").Value, param.Attribute("expectedOutput").Value };
+                    if (testCaseId == "TC_24")
+                        yield return new object[] { param.Attribute("expectedOutput").Value };
+                    if (testCaseId == "TC_25" || testCaseId == "TC_26")
+                        yield return new object[] { param.Attribute("input").Value, param.Attribute("expectedOutput").Value };
                 }
             }
         }

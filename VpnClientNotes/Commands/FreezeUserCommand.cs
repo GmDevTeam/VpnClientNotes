@@ -9,7 +9,7 @@ namespace VpnClientNotes.Commands
     public class FreezeUserCommand : ICommand
     {
         public string Name => "--freezeuser";
-        public string Description => "Заморозить профиль пользователя. Формат: --freezeUser \"Логин\" \"дни.часы.минуты\" (например: 7.0.0 для недели)";
+        public string Description => "Заморозить профиль пользователя. Формат: --freezeUser \"Логин\" \"дни.часы.минуты\" (например: 7/0/0 для недели)";
 
         // ТОЛЬКО ДЛЯ АДМИНОВ
         public Role[] AllowedRoles => new[] { Role.Admin };
@@ -22,7 +22,7 @@ namespace VpnClientNotes.Commands
             string timeString = args[1];
 
             // Парсим формат дни.часы.минуты
-            string[] timeParts = timeString.Split('/');
+            string[] timeParts = timeString.Split('/', '.');
             if (timeParts.Length != 3 ||
                 !int.TryParse(timeParts[0], out int days) ||
                 !int.TryParse(timeParts[1], out int hours) ||
