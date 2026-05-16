@@ -19,4 +19,49 @@
 	<TestCase id="TC_10">
 		<Param newNoteText="Текст изменен" expected="успешно обновлена" />
 	</TestCase>
+
+	<TestCase id="TC_11">
+		<Param expectedText="Текст изменен" />
+	</TestCase>
+	
+	<TestCase id="TC_12">
+		<Param expectedOutput="безвозвратно удалена" />
+	</TestCase>
+	
+	<TestCase id="TC_13">
+		<Param expectedOutput="Список пользователей системы" />
+	</TestCase>
+	
+	<TestCase id="TC_14">
+		<Param login="Spammer" duration="2/0/0" expectedOutput="успешно заморожен" />
+	</TestCase>
+	
+	<TestCase id="TC_15">
+		<Param login="Spammer" password="Spammer_123" expectedError="Оставшееся время блокировки" />
+	</TestCase>
+	
+	<TestCase id="TC_16">
+		<Param login="Spammer" expectedOutput="досрочно разморожен" />
+	</TestCase>
+	
+	<TestCase id="TC_17">
+		<Param login="Spammer" password="Spammer_123" expectedOutput="Успешная авторизация" />
+	</TestCase>
+	
+	<TestCase id="TC_18">
+		<Param key="interval" val="10" expectedOutput="успешно изменена на '10'" />
+	</TestCase>
+	
+	<TestCase id="TC_19">
+		<Param key="cpu" val="false" expectedOutput="успешно изменена на 'false'" />
+	</TestCase>
+	
+	<TestCase id="TC_20">
+		<Param expectedOutput="Последние 10 записей статистики системы" />
+	</TestCase>
+	
+	<TestCase id="TC_21">
+		<Param process="chrome.exe" expectedOutput="добавлен в WatchDog" />
+	</TestCase>
+	
 </TestCases>

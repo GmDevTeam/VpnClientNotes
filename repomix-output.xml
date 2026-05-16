@@ -44,8 +44,10 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
-UnitTests/UnitTest1.cs
+UnitTests/TestParams.xml
 UnitTests/UnitTests.csproj
+UnitTests/VpnNotesCommandsTests.cs
+UnitTests/XmlDataProvider.cs
 VpnClientNotes.slnx
 VpnClientNotes/Commands/AddNoteCommand.cs
 VpnClientNotes/Commands/AddTrackObjectCommand.cs
@@ -101,17 +103,22 @@ VpnClientNotes/VpnClientNotes.csproj
 <files>
 This section contains the contents of the repository's files.
 
-<file path="UnitTests/UnitTest1.cs">
-namespace UnitTests
-{
-    public class UnitTest1
-    {
-        [Fact]
-        public void Test1()
-        {
-        }
-    }
-}
+<file path="UnitTests/TestParams.xml">
+<?xml version="1.0" encoding="utf-8" ?>
+<TestCases>
+	<TestCase id="TC_3">
+		<Param login="Student" password="Student_123" expected="успешно зарегистрирован" />
+	</TestCase>
+	<TestCase id="TC_4">
+		<Param login="Student" password="Student_123" expected="Успешная авторизация" />
+	</TestCase>
+	<TestCase id="TC_7">
+		<Param noteText="Подготовка к экзамену" expected="успешно добавлена" />
+	</TestCase>
+	<TestCase id="TC_10">
+		<Param newNoteText="Текст изменен" expected="успешно обновлена" />
+	</TestCase>
+</TestCases>
 </file>
 
 <file path="UnitTests/UnitTests.csproj">
@@ -132,10 +139,237 @@ namespace UnitTests
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\VpnClientNotes\VpnClientNotes.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="TestParams.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
+</file>
+
+<file path="UnitTests/VpnNotesCommandsTests.cs">
+using System;
+using System.Data;
+using System.IO;
+using System.Linq;
+using VpnClientNotes.Commands;
+using VpnClientNotes.Data;
+using VpnClientNotes.Models;
+using VpnClientNotes.Utils;
+using Xunit;
+namespace UnitTests
+{
+    [Collection("Sequential")]
+    public class VpnNotesCommandsTests : IDisposable
+    {
+        private readonly StringWriter _consoleOutput;
+        public VpnNotesCommandsTests()
+        {
+            _consoleOutput = new StringWriter();
+            Console.SetOut(_consoleOutput);
+            SessionManager.Logout();
+        }
+        public void Dispose()
+        {
+            var standardOutput = new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true };
+            Console.SetOut(standardOutput);
+            _consoleOutput.Dispose();
+            SessionManager.Logout();
+        }
+        [Trait("Category", "Запуск и Конфигурация")]
+        [Fact]
+        public void TC01_ValidStart_HelpCommand_ShowsAvailableCommands()
+        {
+            var command = new HelpCommand();
+            CommandProcessor.RegisterCommand(command);
+            command.Execute(new string[0]);
+            var output = _consoleOutput.ToString();
+            Assert.Contains("Карта команд VPN Notes Client", output);
+            Assert.Contains("--help", output);
+        }
+        [Trait("Category", "Запуск и Конфигурация")]
+        [Fact]
+        public void TC02_MissingConfig_HandlesGracefully()
+        {
+            bool configExists = File.Exists("appsettings.json");
+            if (!configExists)
+            {
+                Assert.False(configExists, "Файл настроек удален/отсутствует, программа не крашится.");
+            }
+        }
+        [Trait("Category", "Авторизация и Сессии")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_3", MemberType = typeof(XmlDataProvider))]
+        public void TC03_RegisterNewUser_CreatesRecordAndShowsSuccess(string login, string password, string expectedOutput)
+        {
+            var command = new RegisterCommand();
+            using (var db = new AppDbContext())
+            {
+                var existingUser = db.Users.FirstOrDefault(u => u.Login == login);
+                if (existingUser != null) { db.Users.Remove(existingUser); db.SaveChanges(); }
+            }
+            command.Execute(new[] { login, password });
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+            using (var db = new AppDbContext())
+            {
+                Assert.True(db.Users.Any(u => u.Login == login), "Пользователь должен появиться в БД");
+            }
+        }
+        [Trait("Category", "Авторизация и Сессии")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_4", MemberType = typeof(XmlDataProvider))]
+        public void TC04_LoginUser_SuccessfulAuthAndSavesSession(string login, string password, string expectedOutput)
+        {
+            var registerCommand = new RegisterCommand();
+            var loginCommand = new LoginCommand();
+            using (var db = new AppDbContext())
+            {
+                if (!db.Users.Any(u => u.Login == login))
+                    registerCommand.Execute(new[] { login, password });
+            }
+            loginCommand.Execute(new[] { login, password });
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+            Assert.True(SessionManager.IsAuthenticated(), "Сессия должна быть сохранена локально.");
+        }
+        [Trait("Category", "Авторизация и Сессии")]
+        [Fact]
+        public void TC05_SessionPersistence_RememberUser()
+        {
+            var user = new User { Id = 999, Login = "TestUser", Role = Role.User };
+            SessionManager.SaveSession(user);
+            bool isAuth = SessionManager.IsAuthenticated();
+            var currentUserRole = SessionManager.GetCurrentUserRole();
+            Assert.True(isAuth, "Приложение должно 'вспомнить' пользователя.");
+            Assert.Equal(Role.User, currentUserRole);
+        }
+        [Trait("Category", "Авторизация и Сессии")]
+        [Fact]
+        public void TC06_LogoutUser_ClearsSession()
+        {
+            var user = new User { Id = 999, Login = "TestUser", Role = Role.User };
+            SessionManager.SaveSession(user);
+            var command = new LogoutCommand();
+            command.Execute(new string[0]);
+            var output = _consoleOutput.ToString();
+            Assert.Contains("Вы успешно вышли из системы", output);
+            Assert.False(SessionManager.IsAuthenticated(), "Файл сессии должен очиститься.");
+        }
+        [Trait("Category", "Заметки (Пользователь)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_7", MemberType = typeof(XmlDataProvider))]
+        public void TC07_AddNewNote_SavesToDbAndOutputsSuccess(string text, string expectedOutput)
+        {
+            int adminId = 1;
+            SessionManager.SaveSession(new User { Id = adminId, Role = Role.User });
+            var command = new AddNoteCommand();
+            command.Execute(new[] { text });
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+            using (var db = new AppDbContext())
+            {
+                Assert.True(db.Notes.Any(n => n.Text == text && n.UserId == adminId));
+            }
+        }
+        [Trait("Category", "Заметки (Пользователь)")]
+        [Fact]
+        public void TC08_ShowNotes_OutputsList_WhenNotesExist()
+        {
+            int adminId = 1;
+            SessionManager.SaveSession(new User { Id = adminId, Role = Role.User });
+            using (var db = new AppDbContext())
+            {
+                db.Notes.Add(new Note { UserId = adminId, Text = "Уникальный текст 890", CreatedAt = DateTime.Now });
+                db.SaveChanges();
+            }
+            var command = new ShowNotesCommand();
+            command.Execute(new string[0]);
+            var output = _consoleOutput.ToString();
+            Assert.Contains("Ваши заметки (Всего:", output);
+            Assert.Contains("Уникальный текст 890", output);
+        }
+        [Trait("Category", "Заметки (Пользователь)")]
+        [Fact]
+        public void TC09_ShowNotes_OutputsEmptyMessage_WhenNoNotes()
+        {
+            var tempUser = new User { Login = "EmptyUser", PasswordHash = "123", Role = Role.User };
+            using (var db = new AppDbContext())
+            {
+                db.Users.Add(tempUser);
+                db.SaveChanges();
+            }
+            SessionManager.SaveSession(tempUser);
+            var command = new ShowNotesCommand();
+            command.Execute(new string[0]);
+            var output = _consoleOutput.ToString();
+            Assert.Contains("У вас пока нет сохраненных заметок.", output);
+        }
+        [Trait("Category", "Заметки (Пользователь)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_10", MemberType = typeof(XmlDataProvider))]
+        public void TC10_UpdateNote_ChangesTextAndOutputsSuccess(string newText, string expectedOutput)
+        {
+            int adminId = 1;
+            SessionManager.SaveSession(new User { Id = adminId, Role = Role.User });
+            int noteId;
+            using (var db = new AppDbContext())
+            {
+                var note = new Note { UserId = adminId, Text = "Старый текст", CreatedAt = DateTime.Now };
+                db.Notes.Add(note);
+                db.SaveChanges();
+                noteId = note.Id;
+            }
+            var command = new UpdateNoteCommand();
+            command.Execute(new[] { noteId.ToString(), newText });
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+            using (var db = new AppDbContext())
+            {
+                var updatedNote = db.Notes.FirstOrDefault(n => n.Id == noteId);
+                Assert.Equal(newText, updatedNote.Text);
+            }
+        }
+    }
+}
+</file>
+
+<file path="UnitTests/XmlDataProvider.cs">
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Linq;
+namespace UnitTests
+{
+    public static class XmlDataProvider
+    {
+        public static IEnumerable<object[]> GetTestData(string testCaseId)
+        {
+            var doc = XDocument.Load("TestParams.xml");
+            var testCase = doc.Descendants("TestCase")
+                              .FirstOrDefault(x => x.Attribute("id")?.Value == testCaseId);
+            if (testCase != null)
+            {
+                foreach (var param in testCase.Elements("Param"))
+                {
+                    if (testCaseId == "TC_3" || testCaseId == "TC_4")
+                        yield return new object[] { param.Attribute("login").Value, param.Attribute("password").Value, param.Attribute("expected").Value };
+                    if (testCaseId == "TC_7")
+                        yield return new object[] { param.Attribute("noteText").Value, param.Attribute("expected").Value };
+                    if (testCaseId == "TC_10")
+                        yield return new object[] { param.Attribute("newNoteText").Value, param.Attribute("expected").Value };
+                }
+            }
+        }
+    }
+}
 </file>
 
 <file path="VpnClientNotes.slnx">

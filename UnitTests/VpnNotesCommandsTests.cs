@@ -7,6 +7,7 @@ using VpnClientNotes.Data;
 using VpnClientNotes.Models;
 using VpnClientNotes.Utils;
 using Xunit;
+using VpnClientNotes.Exeptions;
 
 namespace UnitTests
 {
@@ -257,6 +258,270 @@ namespace UnitTests
             {
                 var updatedNote = db.Notes.FirstOrDefault(n => n.Id == noteId);
                 Assert.Equal(newText, updatedNote.Text);
+            }
+        }
+
+        [Trait("Category", "Заметки (Пользователь)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_11", MemberType = typeof(XmlDataProvider))]
+        public void TC11_ShowNotes_AfterUpdate_ContainsUpdatedText(string expectedText)
+        {
+            // Условие: Авторизован User. Известен ID заметки, введена команда --updatenote ... Вызвать --shownotes
+            int userId = 2; // Берем условного юзера
+            SessionManager.SaveSession(new User { Id = userId, Role = Role.User });
+
+            using (var db = new AppDbContext())
+            {
+                // Имитируем, что заметка уже изменена (TC 10 отработал)
+                db.Notes.Add(new Note { UserId = userId, Text = expectedText, CreatedAt = DateTime.Now });
+                db.SaveChanges();
+            }
+
+            var command = new ShowNotesCommand();
+            command.Execute(new string[0]);
+            var output = _consoleOutput.ToString();
+
+            // Проверка: вывелась заметка "Текст изменен"
+            Assert.Contains(expectedText, output);
+        }
+
+        [Trait("Category", "Заметки (Пользователь)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_12", MemberType = typeof(XmlDataProvider))]
+        public void TC12_DeleteNote_RemovesFromDbAndShowsSuccess(string expectedOutput)
+        {
+            int userId = 2;
+            SessionManager.SaveSession(new User { Id = userId, Role = Role.User });
+            int noteId;
+
+            using (var db = new AppDbContext())
+            {
+                var note = new Note { UserId = userId, Text = "Заметка на удаление", CreatedAt = DateTime.Now };
+                db.Notes.Add(note);
+                db.SaveChanges();
+                noteId = note.Id;
+            }
+
+            var command = new DeleteNoteCommand();
+            command.Execute(new[] { noteId.ToString() });
+
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+
+            using (var db = new AppDbContext())
+            {
+                Assert.False(db.Notes.Any(n => n.Id == noteId), "Запись должна исчезнуть из базы данных.");
+            }
+        }
+
+        [Trait("Category", "Управление (Администратор)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_13", MemberType = typeof(XmlDataProvider))]
+        public void TC13_ShowUsers_AsAdmin_OutputsUsersTable(string expectedOutput)
+        {
+            // Условие: Выполнен вход под аккаунтом Admin.
+            SessionManager.SaveSession(new User { Id = 1, Role = Role.Admin });
+
+            var command = new ShowUsersCommand();
+            command.Execute(new string[0]);
+
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output); // Отображается таблица/список
+        }
+
+        [Trait("Category", "Управление (Администратор)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_14", MemberType = typeof(XmlDataProvider))]
+        public void TC14_FreezeUser_AsAdmin_BansUser(string login, string duration, string expectedOutput)
+        {
+            SessionManager.SaveSession(new User { Id = 1, Role = Role.Admin });
+
+            using (var db = new AppDbContext())
+            {
+                if (!db.Users.Any(u => u.Login == login))
+                {
+                    db.Users.Add(new User { Login = login, PasswordHash = "hash", Role = Role.User });
+                    db.SaveChanges();
+                }
+            }
+
+            var command = new FreezeUserCommand();
+            command.Execute(new[] { login, duration });
+
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+
+            using (var db = new AppDbContext())
+            {
+                var user = db.Users.First(u => u.Login == login);
+                Assert.NotNull(user.BannedUntil);
+                Assert.True(user.BannedUntil > DateTime.Now, "Аккаунт Spammer блокируется на указанное время.");
+            }
+        }
+
+        [Trait("Category", "Управление (Администратор)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_15", MemberType = typeof(XmlDataProvider))]
+        public void TC15_Login_FrozenUser_OutputsBanMessage(string login, string password, string expectedError)
+        {
+            // Очищаем сессию (неавторизованный пользователь)
+            SessionManager.Logout();
+
+            using (var db = new AppDbContext())
+            {
+                var user = db.Users.FirstOrDefault(u => u.Login == login);
+                if (user == null)
+                {
+                    user = new User { Login = login, PasswordHash = HashHelper.ComputeSha256Hash(password), Role = Role.User };
+                    db.Users.Add(user);
+                }
+                user.PasswordHash = HashHelper.ComputeSha256Hash(password);
+                user.BannedUntil = DateTime.Now.AddDays(2); // Заморожен
+                db.SaveChanges();
+            }
+
+            var command = new LoginCommand();
+
+            // Метод выбросит UserBannedException согласно логике в LoginCommand.cs
+            var exception = Assert.Throws<UserBannedException>(() => command.Execute(new[] { login, password }));
+
+            Assert.Contains(expectedError, exception.Message); // В консоль(логику) выведется сообщение о блокировке
+        }
+
+        [Trait("Category", "Управление (Администратор)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_16", MemberType = typeof(XmlDataProvider))]
+        public void TC16_UnfreezeUser_AsAdmin_RemovesBan(string login, string expectedOutput)
+        {
+            SessionManager.SaveSession(new User { Id = 1, Role = Role.Admin });
+
+            using (var db = new AppDbContext())
+            {
+                var user = db.Users.FirstOrDefault(u => u.Login == login);
+                if (user != null)
+                {
+                    user.BannedUntil = DateTime.Now.AddDays(2); // Изначально заморожен
+                    db.SaveChanges();
+                }
+            }
+
+            var command = new UnfreezeUserCommand();
+            command.Execute(new[] { login });
+
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+
+            using (var db = new AppDbContext())
+            {
+                var user = db.Users.First(u => u.Login == login);
+                Assert.Null(user.BannedUntil); // Аккаунт снова может авторизоваться (блокировка снята)
+            }
+        }
+
+        [Trait("Category", "Управление (Администратор)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_17", MemberType = typeof(XmlDataProvider))]
+        public void TC17_Login_UnfrozenUser_SuccessfulAuth(string login, string password, string expectedOutput)
+        {
+            SessionManager.Logout();
+
+            using (var db = new AppDbContext())
+            {
+                var user = db.Users.First(u => u.Login == login);
+                user.PasswordHash = HashHelper.ComputeSha256Hash(password);
+                user.BannedUntil = null; // Точно разблокирован
+                db.SaveChanges();
+            }
+
+            var command = new LoginCommand();
+            command.Execute(new[] { login, password });
+
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output); // Успешная авторизация
+        }
+
+        [Trait("Category", "Аналитика (Аналитик)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_18", MemberType = typeof(XmlDataProvider))]
+        public void TC18_ConfigWatchDog_ChangeInterval_UpdatesDb(string key, string value, string expectedOutput)
+        {
+            SessionManager.SaveSession(new User { Id = 3, Role = Role.Analyst });
+
+            var command = new ConfigWatchDogCommand();
+            command.Execute(new[] { key, value });
+
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+
+            using (var db = new AppDbContext())
+            {
+                var settings = db.WatchDogSettings.First();
+                Assert.Equal(int.Parse(value), settings.IntervalSeconds); // Интервал меняется
+            }
+        }
+
+        [Trait("Category", "Аналитика (Аналитик)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_19", MemberType = typeof(XmlDataProvider))]
+        public void TC19_ConfigWatchDog_ToggleCpuFlag_UpdatesDb(string key, string value, string expectedOutput)
+        {
+            SessionManager.SaveSession(new User { Id = 3, Role = Role.Analyst });
+
+            var command = new ConfigWatchDogCommand();
+            command.Execute(new[] { key, value });
+
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+
+            using (var db = new AppDbContext())
+            {
+                var settings = db.WatchDogSettings.First();
+                Assert.False(settings.TrackCpu); // Модуль перестает собирать информацию о CPU
+            }
+        }
+
+        [Trait("Category", "Аналитика (Аналитик)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_20", MemberType = typeof(XmlDataProvider))]
+        public void TC20_ShowStats_AsAnalyst_OutputsData(string expectedOutput)
+        {
+            SessionManager.SaveSession(new User { Id = 3, Role = Role.Analyst });
+
+            using (var db = new AppDbContext())
+            {
+                db.SystemStats.Add(new SystemStat { CpuUsagePercent = 15, RamAvailableMB = 2048, HddAvailableGB = 500, RecordedAt = DateTime.Now });
+                db.SaveChanges();
+            }
+
+            var command = new ShowStatsCommand();
+            command.Execute(new string[0]);
+
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output); // Отображается актуальная сводка системных метрик
+        }
+
+        [Trait("Category", "Аналитика (Аналитик)")]
+        [Theory]
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_21", MemberType = typeof(XmlDataProvider))]
+        public void TC21_AddTrackObject_AsAnalyst_AddsToDb(string process, string expectedOutput)
+        {
+            SessionManager.SaveSession(new User { Id = 3, Role = Role.Analyst });
+
+            using (var db = new AppDbContext())
+            {
+                var existing = db.TrackedObjects.FirstOrDefault(t => t.ProcessName == process);
+                if (existing != null) { db.TrackedObjects.Remove(existing); db.SaveChanges(); }
+            }
+
+            var command = new AddTrackObjectCommand();
+            command.Execute(new[] { process });
+
+            var output = _consoleOutput.ToString();
+            Assert.Contains(expectedOutput, output);
+
+            using (var db = new AppDbContext())
+            {
+                Assert.True(db.TrackedObjects.Any(t => t.ProcessName == process), "В базу данных добавляется новая запись.");
             }
         }
     }
