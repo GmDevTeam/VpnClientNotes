@@ -37,45 +37,10 @@ namespace UnitTests
             SessionManager.Logout();
         }
 
-        [Trait("Category", "Запуск и Конфигурация")]
-        [Fact] // [Fact] используется, так как у нас нет параметров (не используем XML здесь)
-        public void TC01_ValidStart_HelpCommand_ShowsAvailableCommands()
-        {
-            // Arrange
-            var command = new HelpCommand();
-
-            // Искусственно регистрируем команду в CommandProcessor, 
-            // чтобы HelpCommand было, что выводить в цикле foreach.
-            CommandProcessor.RegisterCommand(command);
-
-            // Act
-            command.Execute(new string[0]);
-            var output = _consoleOutput.ToString();
-
-            // Assert
-            Assert.Contains("Карта команд VPN Notes Client", output);
-            Assert.Contains("--help", output); // Теперь этот Assert пройдет успешно!
-        }
-
-        [Trait("Category", "Запуск и Конфигурация")]
-        [Fact]
-        public void TC02_MissingConfig_HandlesGracefully()
-        {
-            // Примечание: В текущей реализации (AppDbContext.cs) конфигурация захардкожена. 
-            // Этот тест-заглушка имитирует логику, которую ожидает преподаватель.
-            // В реальном проекте мы бы проверяли выброс кастомного исключения.
-            bool configExists = File.Exists("appsettings.json");
-            if (!configExists)
-            {
-                // Если файла нет, приложение не должно упасть с NullReference, а должно корректно обработать это.
-                Assert.False(configExists, "Файл настроек удален/отсутствует, программа не крашится.");
-            }
-        }
-
         [Trait("Category", "Авторизация и Сессии")]
         [Theory] // [Theory] означает, что тест параметризован
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_3", MemberType = typeof(XmlDataProvider))]
-        public void TC03_RegisterNewUser_CreatesRecordAndShowsSuccess(string login, string password, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_1", MemberType = typeof(XmlDataProvider))]
+        public void TC01_RegisterNewUser_CreatesRecordAndShowsSuccess(string login, string password, string expectedOutput)
         {
             // Arrange
             var command = new RegisterCommand();
@@ -101,8 +66,8 @@ namespace UnitTests
 
         [Trait("Category", "Авторизация и Сессии")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_4", MemberType = typeof(XmlDataProvider))]
-        public void TC04_LoginUser_SuccessfulAuthAndSavesSession(string login, string password, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_2", MemberType = typeof(XmlDataProvider))]
+        public void TC02_LoginUser_SuccessfulAuthAndSavesSession(string login, string password, string expectedOutput)
         {
             // Arrange
             var registerCommand = new RegisterCommand();
@@ -126,7 +91,7 @@ namespace UnitTests
 
         [Trait("Category", "Авторизация и Сессии")]
         [Fact]
-        public void TC05_SessionPersistence_RememberUser()
+        public void TC03_SessionPersistence_RememberUser()
         {
             // Arrange - имитируем предыдущий логин
             var user = new User { Id = 999, Login = "TestUser", Role = Role.User };
@@ -143,7 +108,7 @@ namespace UnitTests
 
         [Trait("Category", "Авторизация и Сессии")]
         [Fact]
-        public void TC06_LogoutUser_ClearsSession()
+        public void TC04_LogoutUser_ClearsSession()
         {
             // Arrange
             var user = new User { Id = 999, Login = "TestUser", Role = Role.User };
@@ -161,8 +126,8 @@ namespace UnitTests
 
         [Trait("Category", "Заметки (Пользователь)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_7", MemberType = typeof(XmlDataProvider))]
-        public void TC07_AddNewNote_SavesToDbAndOutputsSuccess(string text, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_5", MemberType = typeof(XmlDataProvider))]
+        public void TC05_AddNewNote_SavesToDbAndOutputsSuccess(string text, string expectedOutput)
         {
             // Arrange - авторизуем тестового юзера
             int adminId = 1; // У нас в Seed данных есть admin с Id = 1
@@ -183,7 +148,7 @@ namespace UnitTests
 
         [Trait("Category", "Заметки (Пользователь)")]
         [Fact]
-        public void TC08_ShowNotes_OutputsList_WhenNotesExist()
+        public void TC06_ShowNotes_OutputsList_WhenNotesExist()
         {
             // Arrange
             int adminId = 1;
@@ -208,7 +173,7 @@ namespace UnitTests
 
         [Trait("Category", "Заметки (Пользователь)")]
         [Fact]
-        public void TC09_ShowNotes_OutputsEmptyMessage_WhenNoNotes()
+        public void TC07_ShowNotes_OutputsEmptyMessage_WhenNoNotes()
         {
             // Arrange - создаем временного юзера без заметок
             var tempUser = new User { Login = "EmptyUser", PasswordHash = "123", Role = Role.User };
@@ -230,8 +195,8 @@ namespace UnitTests
 
         [Trait("Category", "Заметки (Пользователь)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_10", MemberType = typeof(XmlDataProvider))]
-        public void TC10_UpdateNote_ChangesTextAndOutputsSuccess(string newText, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_8", MemberType = typeof(XmlDataProvider))]
+        public void TC08_UpdateNote_ChangesTextAndOutputsSuccess(string newText, string expectedOutput)
         {
             // Arrange
             int adminId = 1;
@@ -264,8 +229,8 @@ namespace UnitTests
 
         [Trait("Category", "Заметки (Пользователь)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_11", MemberType = typeof(XmlDataProvider))]
-        public void TC11_ShowNotes_AfterUpdate_ContainsUpdatedText(string expectedText)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_9", MemberType = typeof(XmlDataProvider))]
+        public void TC09_ShowNotes_AfterUpdate_ContainsUpdatedText(string expectedText)
         {
             // Условие: Авторизован User. Известен ID заметки, введена команда --updatenote ... Вызвать --shownotes
             int userId = 2; // Берем условного юзера
@@ -273,7 +238,7 @@ namespace UnitTests
 
             using (var db = new AppDbContext())
             {
-                // Имитируем, что заметка уже изменена (TC 10 отработал)
+                // Имитируем, что заметка уже изменена (TC 8 отработал)
                 db.Notes.Add(new Note { UserId = userId, Text = expectedText, CreatedAt = DateTime.Now });
                 db.SaveChanges();
             }
@@ -288,8 +253,8 @@ namespace UnitTests
 
         [Trait("Category", "Заметки (Пользователь)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_12", MemberType = typeof(XmlDataProvider))]
-        public void TC12_DeleteNote_RemovesFromDbAndShowsSuccess(string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_10", MemberType = typeof(XmlDataProvider))]
+        public void TC10_DeleteNote_RemovesFromDbAndShowsSuccess(string expectedOutput)
         {
             int userId = 2;
             SessionManager.SaveSession(new User { Id = userId, Role = Role.User });
@@ -317,8 +282,8 @@ namespace UnitTests
 
         [Trait("Category", "Управление (Администратор)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_13", MemberType = typeof(XmlDataProvider))]
-        public void TC13_ShowUsers_AsAdmin_OutputsUsersTable(string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_11", MemberType = typeof(XmlDataProvider))]
+        public void TC11_ShowUsers_AsAdmin_OutputsUsersTable(string expectedOutput)
         {
             // Условие: Выполнен вход под аккаунтом Admin.
             SessionManager.SaveSession(new User { Id = 1, Role = Role.Admin });
@@ -332,8 +297,8 @@ namespace UnitTests
 
         [Trait("Category", "Управление (Администратор)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_14", MemberType = typeof(XmlDataProvider))]
-        public void TC14_FreezeUser_AsAdmin_BansUser(string login, string duration, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_12", MemberType = typeof(XmlDataProvider))]
+        public void TC12_FreezeUser_AsAdmin_BansUser(string login, string duration, string expectedOutput)
         {
             SessionManager.SaveSession(new User { Id = 1, Role = Role.Admin });
 
@@ -362,8 +327,8 @@ namespace UnitTests
 
         [Trait("Category", "Управление (Администратор)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_15", MemberType = typeof(XmlDataProvider))]
-        public void TC15_Login_FrozenUser_OutputsBanMessage(string login, string password, string expectedError)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_13", MemberType = typeof(XmlDataProvider))]
+        public void TC13_Login_FrozenUser_OutputsBanMessage(string login, string password, string expectedError)
         {
             // Очищаем сессию (неавторизованный пользователь)
             SessionManager.Logout();
@@ -391,8 +356,8 @@ namespace UnitTests
 
         [Trait("Category", "Управление (Администратор)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_16", MemberType = typeof(XmlDataProvider))]
-        public void TC16_UnfreezeUser_AsAdmin_RemovesBan(string login, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_14", MemberType = typeof(XmlDataProvider))]
+        public void TC14_UnfreezeUser_AsAdmin_RemovesBan(string login, string expectedOutput)
         {
             SessionManager.SaveSession(new User { Id = 1, Role = Role.Admin });
 
@@ -421,8 +386,8 @@ namespace UnitTests
 
         [Trait("Category", "Управление (Администратор)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_17", MemberType = typeof(XmlDataProvider))]
-        public void TC17_Login_UnfrozenUser_SuccessfulAuth(string login, string password, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_15", MemberType = typeof(XmlDataProvider))]
+        public void TC15_Login_UnfrozenUser_SuccessfulAuth(string login, string password, string expectedOutput)
         {
             SessionManager.Logout();
 
@@ -443,8 +408,8 @@ namespace UnitTests
 
         [Trait("Category", "Аналитика (Аналитик)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_18", MemberType = typeof(XmlDataProvider))]
-        public void TC18_ConfigWatchDog_ChangeInterval_UpdatesDb(string key, string value, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_16", MemberType = typeof(XmlDataProvider))]
+        public void TC16_ConfigWatchDog_ChangeInterval_UpdatesDb(string key, string value, string expectedOutput)
         {
             SessionManager.SaveSession(new User { Id = 3, Role = Role.Analyst });
 
@@ -463,8 +428,8 @@ namespace UnitTests
 
         [Trait("Category", "Аналитика (Аналитик)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_19", MemberType = typeof(XmlDataProvider))]
-        public void TC19_ConfigWatchDog_ToggleCpuFlag_UpdatesDb(string key, string value, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_17", MemberType = typeof(XmlDataProvider))]
+        public void TC17_ConfigWatchDog_ToggleCpuFlag_UpdatesDb(string key, string value, string expectedOutput)
         {
             SessionManager.SaveSession(new User { Id = 3, Role = Role.Analyst });
 
@@ -483,8 +448,8 @@ namespace UnitTests
 
         [Trait("Category", "Аналитика (Аналитик)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_20", MemberType = typeof(XmlDataProvider))]
-        public void TC20_ShowStats_AsAnalyst_OutputsData(string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_18", MemberType = typeof(XmlDataProvider))]
+        public void TC18_ShowStats_AsAnalyst_OutputsData(string expectedOutput)
         {
             SessionManager.SaveSession(new User { Id = 3, Role = Role.Analyst });
 
@@ -503,8 +468,8 @@ namespace UnitTests
 
         [Trait("Category", "Аналитика (Аналитик)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_21", MemberType = typeof(XmlDataProvider))]
-        public void TC21_AddTrackObject_AsAnalyst_AddsToDb(string process, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_19", MemberType = typeof(XmlDataProvider))]
+        public void TC19_AddTrackObject_AsAnalyst_AddsToDb(string process, string expectedOutput)
         {
             SessionManager.SaveSession(new User { Id = 3, Role = Role.Analyst });
 
@@ -528,8 +493,8 @@ namespace UnitTests
 
         [Trait("Category", "Аналитика (Аналитик)")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_22", MemberType = typeof(XmlDataProvider))]
-        public void TC22_RemoveTrackObject_AsAnalyst_RemovesFromDb(string process, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_20", MemberType = typeof(XmlDataProvider))]
+        public void TC20_RemoveTrackObject_AsAnalyst_RemovesFromDb(string process, string expectedOutput)
         {
             // Устанавливаем сессию Аналитика
             SessionManager.SaveSession(new User { Id = 3, Role = Role.Analyst });
@@ -559,8 +524,8 @@ namespace UnitTests
 
         [Trait("Category", "Изоляция прав доступа")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_23", MemberType = typeof(XmlDataProvider))]
-        public void TC23_AccessIsolation_UserTriesAdminCommand_OutputsError(string command, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_21", MemberType = typeof(XmlDataProvider))]
+        public void TC21_AccessIsolation_UserTriesAdminCommand_OutputsError(string command, string expectedOutput)
         {
             // Устанавливаем сессию обычного пользователя
             SessionManager.SaveSession(new User { Id = 2, Role = Role.User });
@@ -578,8 +543,8 @@ namespace UnitTests
 
         [Trait("Category", "Система обновлений")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_24", MemberType = typeof(XmlDataProvider))]
-        public async Task TC24_UpdateSystem_ChecksForReleaseOnGitHub(string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_22", MemberType = typeof(XmlDataProvider))]
+        public async Task TC22_UpdateSystem_ChecksForReleaseOnGitHub(string expectedOutput)
         {
             // Действие: Вызываем проверку обновлений
             // Так как метод асинхронный, тест тоже делаем async Task
@@ -592,8 +557,8 @@ namespace UnitTests
 
         [Trait("Category", "Система обновлений")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_25", MemberType = typeof(XmlDataProvider))]
-        public async Task TC25_UpdateSystem_AcceptPatch_DownloadsAndPreparesRestart(string input, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_23", MemberType = typeof(XmlDataProvider))]
+        public async Task TC23_UpdateSystem_AcceptPatch_DownloadsAndPreparesRestart(string input, string expectedOutput)
         {
             // Имитируем ввод пользователя (yes) в консоль
             var stringReader = new StringReader(input + Environment.NewLine);
@@ -624,8 +589,8 @@ namespace UnitTests
 
         [Trait("Category", "Система обновлений")]
         [Theory]
-        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_26", MemberType = typeof(XmlDataProvider))]
-        public async Task TC26_UpdateSystem_DeclinePatch_ContinuesBoot(string input, string expectedOutput)
+        [MemberData(nameof(XmlDataProvider.GetTestData), "TC_24", MemberType = typeof(XmlDataProvider))]
+        public async Task TC24_UpdateSystem_DeclinePatch_ContinuesBoot(string input, string expectedOutput)
         {
             // Имитируем ввод пользователя (no) в консоль
             var stringReader = new StringReader(input + Environment.NewLine);

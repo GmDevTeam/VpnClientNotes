@@ -1,88 +1,88 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <TestCases>
-	
-	<!-- Тест 3: Регистрация -->
-	<TestCase id="TC_3">
+
+	<!-- Тест 1: Регистрация -->
+	<TestCase id="TC_1">
 		<Param login="Student" password="Student_123" expected="успешно зарегистрирован" />
 	</TestCase>
 
-	<!-- Тест 4: Вход -->
-	<TestCase id="TC_4">
+	<!-- Тест 2: Вход -->
+	<TestCase id="TC_2">
 		<Param login="Student" password="Student_123" expected="Успешная авторизация" />
 	</TestCase>
 
-	<!-- Тест 7: Добавление заметки -->
-	<TestCase id="TC_7">
+	<!-- Тест 5: Добавление заметки -->
+	<TestCase id="TC_5">
 		<Param noteText="Подготовка к экзамену" expected="успешно добавлена" />
 	</TestCase>
 
-	<!-- Тест 10: Изменение заметки -->
-	<TestCase id="TC_10">
+	<!-- Тест 8: Изменение заметки -->
+	<TestCase id="TC_8">
 		<Param newNoteText="Текст изменен" expected="успешно обновлена" />
 	</TestCase>
 
-	<TestCase id="TC_11">
+	<TestCase id="TC_9">
 		<Param expectedText="Текст изменен" />
 	</TestCase>
-	
-	<TestCase id="TC_12">
+
+	<TestCase id="TC_10">
 		<Param expectedOutput="безвозвратно удалена" />
 	</TestCase>
-	
-	<TestCase id="TC_13">
+
+	<TestCase id="TC_11">
 		<Param expectedOutput="Список пользователей системы" />
 	</TestCase>
-	
-	<TestCase id="TC_14">
+
+	<TestCase id="TC_12">
 		<Param login="Spammer" duration="2/0/0" expectedOutput="успешно заморожен" />
 	</TestCase>
-	
-	<TestCase id="TC_15">
+
+	<TestCase id="TC_13">
 		<Param login="Spammer" password="Spammer_123" expectedError="Оставшееся время блокировки" />
 	</TestCase>
-	
-	<TestCase id="TC_16">
+
+	<TestCase id="TC_14">
 		<Param login="Spammer" expectedOutput="досрочно разморожен" />
 	</TestCase>
-	
-	<TestCase id="TC_17">
+
+	<TestCase id="TC_15">
 		<Param login="Spammer" password="Spammer_123" expectedOutput="Успешная авторизация" />
 	</TestCase>
-	
-	<TestCase id="TC_18">
+
+	<TestCase id="TC_16">
 		<Param key="interval" val="10" expectedOutput="успешно изменена на '10'" />
 	</TestCase>
-	
-	<TestCase id="TC_19">
+
+	<TestCase id="TC_17">
 		<Param key="cpu" val="false" expectedOutput="успешно изменена на 'false'" />
 	</TestCase>
-	
-	<TestCase id="TC_20">
+
+	<TestCase id="TC_18">
 		<Param expectedOutput="Последние 10 записей статистики системы" />
 	</TestCase>
-	
-	<TestCase id="TC_21">
+
+	<TestCase id="TC_19">
 		<Param process="chrome.exe" expectedOutput="добавлен в WatchDog" />
 	</TestCase>
 
-	<TestCase id="TC_22">
+	<TestCase id="TC_20">
 		<Param process="chrome.exe" expectedOutput="Слежение за 'chrome.exe' прекращено" />
 	</TestCase>
-	
-	<TestCase id="TC_23">
+
+	<TestCase id="TC_21">
 		<Param command="--showlogs" expectedOutput="нет прав для выполнения команды" />
 	</TestCase>
-	
-	<TestCase id="TC_24">
+
+	<TestCase id="TC_22">
 		<Param expectedOutput="Проверка обновлений на GitHub" />
 	</TestCase>
-	
-	<TestCase id="TC_25">
+
+	<TestCase id="TC_23">
 		<Param input="yes" expectedOutput="Скачивание завершено" />
 	</TestCase>
-	
-	<TestCase id="TC_26">
+
+	<TestCase id="TC_24">
 		<Param input="no" expectedOutput="Проверка обновлений на GitHub" />
 	</TestCase>
-	
+
 </TestCases>

@@ -16,40 +16,40 @@ namespace UnitTests
                 foreach (var param in testCase.Elements("Param"))
                 {
                     // Обработка существующих и новых тест-кейсов
-                    if (testCaseId == "TC_3" || testCaseId == "TC_4" || testCaseId == "TC_15" || testCaseId == "TC_17")
+                    if (testCaseId == "TC_1" || testCaseId == "TC_2" || testCaseId == "TC_13" || testCaseId == "TC_15")
                         yield return new object[] { param.Attribute("login").Value, param.Attribute("password").Value, param.Attribute("expectedError")?.Value ?? param.Attribute("expectedOutput")?.Value ?? param.Attribute("expected").Value };
 
-                    if (testCaseId == "TC_7")
+                    if (testCaseId == "TC_5")
                         yield return new object[] { param.Attribute("noteText").Value, param.Attribute("expected").Value };
 
-                    if (testCaseId == "TC_10")
+                    if (testCaseId == "TC_8")
                         yield return new object[] { param.Attribute("newNoteText").Value, param.Attribute("expected").Value };
 
-                    if (testCaseId == "TC_11")
+                    if (testCaseId == "TC_9")
                         yield return new object[] { param.Attribute("expectedText").Value };
 
-                    if (testCaseId == "TC_12" || testCaseId == "TC_13" || testCaseId == "TC_20")
+                    if (testCaseId == "TC_10" || testCaseId == "TC_11" || testCaseId == "TC_18")
                         yield return new object[] { param.Attribute("expectedOutput").Value };
 
-                    if (testCaseId == "TC_14")
+                    if (testCaseId == "TC_12")
                         yield return new object[] { param.Attribute("login").Value, param.Attribute("duration").Value, param.Attribute("expectedOutput").Value };
 
-                    if (testCaseId == "TC_16" || testCaseId == "TC_21")
+                    if (testCaseId == "TC_14" || testCaseId == "TC_19")
                         yield return new object[] { param.Attribute("login")?.Value ?? param.Attribute("process").Value, param.Attribute("expectedOutput").Value };
 
-                    if (testCaseId == "TC_18" || testCaseId == "TC_19")
+                    if (testCaseId == "TC_16" || testCaseId == "TC_17")
                         yield return new object[] { param.Attribute("key").Value, param.Attribute("val").Value, param.Attribute("expectedOutput").Value };
 
-                    if (testCaseId == "TC_22")
+                    if (testCaseId == "TC_20")
                         yield return new object[] { param.Attribute("process").Value, param.Attribute("expectedOutput").Value };
 
-                    if (testCaseId == "TC_23")
+                    if (testCaseId == "TC_21")
                         yield return new object[] { param.Attribute("command").Value, param.Attribute("expectedOutput").Value };
 
-                    if (testCaseId == "TC_24")
+                    if (testCaseId == "TC_22")
                         yield return new object[] { param.Attribute("expectedOutput").Value };
 
-                    if (testCaseId == "TC_25" || testCaseId == "TC_26")
+                    if (testCaseId == "TC_23" || testCaseId == "TC_24")
                         yield return new object[] { param.Attribute("input").Value, param.Attribute("expectedOutput").Value };
                 }
             }
